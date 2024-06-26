@@ -6,5 +6,7 @@ Conventionally, quiz data could be generated from various open sources. These so
 Considering this nature and be afraid of content right, I wanted to try other method of getting fake, or synthetic data.
 
 As I'm dedicated to using cloud solutions in [Google Cloud Platform (GCP)](https://cloud.google.com/),
-I get solution from [Vertex AI](https://cloud.google.com/vertex-ai).
+I get my solution from [Vertex AI](https://cloud.google.com/vertex-ai).
+
+
 
