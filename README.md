@@ -47,13 +47,18 @@ For Google Cloud Storage (GCS), we make `gcs_read` and `gcs_write` to read from 
 # Imports the Google Cloud client library
 from google.cloud import storage
 
-def gcs_read(bucket_name, blob_name):
-    """Read a blob from GCS using file-like IO"""
+def gcs_read(bucket_name, blob_name, j_load=False):
+    """
+    Read a blob from GCS using file-like IO.
+    Default use readlines() for text file.
+    Change `j_load` to True if json.load() is used for reading clean JSON file.
+    """
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(blob_name)
     with blob.open("r") as file:
-        # Return data as lines
+        if j_load:
+            return json.load(file)
         return file.readlines()
     
 def gcs_write(bucket_name, blob_name, content):
@@ -328,4 +333,38 @@ df_2 = df1.copy()
 # Apply the function to full dataset
 df_2['incorrect'] = df_2['answer'].apply(split_choice).str['incorrect']
 df_2['correct'] = df_2['answer'].apply(split_choice).str['correct']
+```
+
+### 4. Compose clean dataframe
+
+To save space and memory, we should include only columns that we need.
+In this case, `question` and clean `incorrect`, `correct` are all that we will use directly in our webb app.
+
+```
+# New order of columns
+new_order = ['question', 'incorrect', 'correct']
+
+# Make a copy of `df_a` with new order of columns
+df_clean = df_2[new_order].copy()
+
+# Preview data in a row
+display(df_clean['incorrect'][45])
+display(df_clean['correct'][45])
+df_clean.iloc[45]
+```
+
+## Export data file
+
+Now we can convert our data into JSON string and load it to GCS object as a JSON file for later application.
+
+```
+# Pick up the read blob name with '.txt' excluded, to make new json file name
+JSON_BLOB = READ_BLOB[:-4] + '.json'
+
+# Convert `df_clean` to JSON string
+json_string = df_clean.to_json()
+```
+```
+# Write JSON string to GCS object as a JSON file
+gcs_write(BUCKET, JSON_BLOB, json_string)
 ```
