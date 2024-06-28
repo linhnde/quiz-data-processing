@@ -35,7 +35,8 @@ I use [Vertex AI](https://cloud.google.com/vertex-ai) to generate data for proce
 We need to import Pandas and some other general packages.
 
 To make GCP jobs work out, we authenticate GCP credentials
-using environment variable `GOOGLE_APPLICATION_CREDENTIALS`. It's also convenient to assign constants related to GCP service.
+using environment variable `GOOGLE_APPLICATION_CREDENTIALS`.
+It's also convenient to assign constants related to GCP services.
 
 ```
 # Import general packages
@@ -45,19 +46,18 @@ import io
 import json
 
 # Set environment variable to authenticate GCP credentials
-!export GOOGLE_APPLICATION_CREDENTIALS='book-to-quiz-7558e7ee5aca.json'
+!export GOOGLE_APPLICATION_CREDENTIALS='path/to/credentials.json'
 
-LOCATION = "us-central1"
-PROJECT = 'book-to-quiz'
-BUCKET = 'book-to-quiz-question-bank'
-
+LOCATION = "location"
+PROJECT = 'project-name'
+BUCKET = 'bucket-name'
 MODEL = "gemini-1.5-flash-001"
 ```
 
 ### 2. Define functions interact with GCP
 It's better to follow GCP docs and prepare some functions to work with GCP so that we can use later with ease.
 
-For Google Cloud Storage (GCS), we make `gcs_read` and `gcs_write` to read from and write to.
+For Google Cloud Storage (GCS), we make `gcs_read` and `gcs_write` to read and write objects.
 
 ```
 # Imports the Google Cloud client library
@@ -65,7 +65,7 @@ from google.cloud import storage
 
 def gcs_read(bucket_name, blob_name, j_load=False):
     """
-    Read a blob from GCS using file-like IO.
+    Read a blob from GCS.
     Default use readlines() for text file.
     Change `j_load` to True if json.load() is used for reading clean JSON file.
     """
@@ -78,7 +78,7 @@ def gcs_read(bucket_name, blob_name, j_load=False):
         return file.readlines()
     
 def gcs_write(bucket_name, blob_name, content):
-    """Write a blob from GCS using file-like IO"""
+    """Write a blob to GCS"""
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(blob_name)
@@ -86,7 +86,7 @@ def gcs_write(bucket_name, blob_name, content):
         file.write(content)
 ```
 
-For Vertex AI, we need a `generate` as a generator to yield response in processing.
+For Vertex AI, we need a `generate` function as a generator to yield response text in processing.
 
 ```
 # Import Vertex AI packages
@@ -113,7 +113,7 @@ def generate(p_text, g_config, s_settings):
 
 ## Generate Vertex AI content
 
-Define variables with value we will use for Vertex AI.
+Define variables with value we will use for Vertex AI input.
 
 ```
 prompt = """Generate quiz with these requirements:
@@ -160,32 +160,29 @@ generate_text = ''.join(response for response in generator)
 
 ## Export generated data to file, write to GCS
 
-Extract topic, difficulty and size from prompt text. Combine all into a TXT file name.
+Extract topic, difficulty and size from prompt text.
+Combine all into a new TXT file name.
 
 ```
 # Read generated text as lines
 buf = io.StringIO(prompt)
 lines = buf.readlines()
 
-# Check topic line
+# Extract topic
 topic_line = [line for line in lines if '- Topic: ' in line][0]
 topic = topic_line[9:].rstrip('\n.')
 topic = re.sub(' ', '_', topic.lower())
-print('Topic:', topic)
 
-# Check difficulty line
+# Extract difficulty
 difficulty_line = [line for line in lines if '- Difficulty: ' in line][0]
 difficulty = difficulty_line[14:].rstrip('\n.').lower()
-print('Difficulty:', difficulty)
 
-# Check size line
+# Extract size
 size_line = [line for line in lines if '- Total questions: ' in line][0]
 size = size_line[19:].rstrip('\n.')
-print('Size:', size)
 
 # Combine topic, difficulty and size into .txt file name
 file_name = f'{topic}_{difficulty}_{size}.txt'
-print('File name:', file_name)
 ```
 
 Write the generated data to our GCS bucket with prepared file name in TXT format.
@@ -206,9 +203,6 @@ We will use the same file we've just exported for the purpose of loading data fr
 READ_BLOB = file_name
 
 data = gcs_read(BUCKET, READ_BLOB)
-
-# Use display() because data is already list of lines structure
-display(data)
 ```
 
 ## Process data
@@ -219,7 +213,10 @@ Define function `split_qa`.
 
 ```
 def split_qa(lines_data):
-    """Accepts list of lines. Returns a dictionary with keys `question` and `answer`"""
+    """
+    Accepts list of lines.
+    Returns a dictionary with keys `question` and `answer`
+    """
     dict_data = {'question': [],
                  'answer': []}
     
@@ -227,15 +224,18 @@ def split_qa(lines_data):
     q_prev = False
     
     for line in lines_data:
-        # Strip '**' style around 'Correct answer(s)'
+    
+        # Strip '**' style around 'Correct answer(s)' or 'Correct'
         line = line.replace('**', '')
-        # Check if line is not blank or title, heading ('##')
+        
+        # Check if line is not blank, title or heading ('##')
         if (line != '\n') and ('##' not in line):
+        
             # Call the first word of the line is `head`
             head = line.split()[0]
             
             # Append new question if all of these meet:
-            # - `q_prev` is False
+            # - Previous line is not in question text
             # - First character of `head` is numeric
             # - Last character of `head` is '.'
             if (not q_prev) and head[0].isnumeric() and head[-1] == ".":
@@ -243,7 +243,7 @@ def split_qa(lines_data):
                 q_prev = True
     
             # Append new answer if all of these meet:
-            # - `q_prev` is True
+            # - Previous line is in question text
             # - `head` is 'A.'
             elif q_prev and head == 'A.':
                 dict_data['answer'].append(line)
@@ -268,9 +268,6 @@ dict0 = split_qa(data)
 
 # Convert `dict0` to a DataFrame
 df0 = pd.DataFrame(dict0)
-
-print('Number of questions:', len(df0))
-print('Columns:', df0.columns.values)
 ```
 
 ### 2. Tidy question text
@@ -288,7 +285,7 @@ df1['question'] = df1['question'].str.replace(r'^\d{0,4}\.[ ]', '', regex=True).
 
 ### 3. Split answer text into multiple choices
 
-Define `split_choice` to split answer text into multiple choices.
+Define `split_choice` function to split answer text into multiple choices.
 Choices will be confirmed as correct and incorrect thereafter.
 
 ```
@@ -300,40 +297,29 @@ def split_choice(answer):
     """
     Split the `answer` data into multiple choices
     """
-    # print(answer)
-    
     # Use 'Correct Answer(s): ' to split text.
     # Index 0 is all choices, index 1 is all answers
     split_all = re.split(r'Correct Answer[s]*: ', answer)
-    # print("After strip 'Correct Answer: ': ", split_all)
-    
     choices = split_all[0]
-    # print('Choices text:', choices)
-    
     correct_stack = split_all[1]
-    # print('Correct stack:', correct_stack)
     
     # Split using ','
     correct_stack = correct_stack.split(',')
     
     # Pick only first capital indicating the choices
     correct_note = [item.strip()[0] for item in correct_stack]
-    # print('Correct note:', correct_note)
     
     # Make zero-based index from alphabet
     correct_index = [convert_index(item) for item in correct_note]
-    # print('Correct index', correct_index)
     
     # Split using 'X. ', index 0 is '', so pass
     choices = re.split(r'[A-Z]\.[ ]', choices)[1:]
     # Strip right side of choice text
     choices = [choice.rstrip() for choice in choices]
-    # print('All choices in list: ', choices)
     
+    # Separate choices into lists as `incorrect` and `correct`
     incorrect = [choice for index, choice in enumerate(choices) if index not in correct_index]
-    # print('Incorrect in list: ', incorrect)
     correct = [choice for index, choice in enumerate(choices) if index in correct_index]
-    # print('Correct in list: ', correct)
     
     return {'incorrect': incorrect,
             'correct': correct}
@@ -362,11 +348,6 @@ new_order = ['question', 'incorrect', 'correct']
 
 # Make a copy of `df_a` with new order of columns
 df_clean = df_2[new_order].copy()
-
-# Preview data in a row
-display(df_clean['incorrect'][45])
-display(df_clean['correct'][45])
-df_clean.iloc[45]
 ```
 
 ## Export clean data
