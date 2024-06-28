@@ -2,6 +2,22 @@
 
 ### Jupyter Notebook file: [VIEW](quiz_data_processing.ipynb)
 
+## Table of contents
+1. [Introduction](#introduction)
+2. [Preparing](#preparing)
+   1. [Import](#1-import)
+   2. [Define functions interact with GCP](#2-define-functions-interact-with-gcp)
+3. [Generate Vertex AI content](#generate-vertex-ai-content)
+4. [Export generated data to file, write to GCS](#export-generated-data-to-file-write-to-gcs)
+5. [Load data from GCS](#load-data-from-gcs)
+6. [Process data](#process-data)
+   1. [Split questions and answers from text](#1-split-questions-and-answers-from-text)
+   2. [Tidy question text](#2-tidy-question-text)
+   3. [Split answer text into multiple choices](#3-split-answer-text-into-multiple-choices)
+   4. [Compose clean dataframe](#4-compose-clean-dataframe)
+7. [Export clean data](#export-clean-data)
+
+
 ## Introduction
 
 In this project, we will build a Jupyter notebook to create a synthetic quiz dataset for using in web app.
@@ -14,7 +30,7 @@ I get my solution from [Vertex AI](https://cloud.google.com/vertex-ai).
 
 ## Preparing
 
-### 1. Import, authenticate and assign
+### 1. Import
 
 We need to import Pandas and some other general packages.
 
@@ -353,7 +369,7 @@ display(df_clean['correct'][45])
 df_clean.iloc[45]
 ```
 
-## Export data file
+## Export clean data
 
 Now we can convert our data into JSON string and load it to GCS object as a JSON file for later application.
 
