@@ -8,7 +8,7 @@
    1. [Import](#1-import)
    2. [Define functions interact with GCP](#2-define-functions-interact-with-gcp)
 3. [Generate Vertex AI content](#generate-vertex-ai-content)
-4. [Export generated data to file, write to GCS](#export-generated-data-to-file-write-to-gcs)
+4. [Export generated data to GCS](#export-generated-data-to-gcs)
 5. [Load data from GCS](#load-data-from-gcs)
 6. [Process data](#process-data)
    1. [Split questions and answers from text](#1-split-questions-and-answers-from-text)
@@ -16,17 +16,20 @@
    3. [Split answer text into multiple choices](#3-split-answer-text-into-multiple-choices)
    4. [Compose clean dataframe](#4-compose-clean-dataframe)
 7. [Export clean data](#export-clean-data)
+8. [Conclusion](#conclusion)
 
 
 ## Introduction
 
-In this project, we will build a Jupyter notebook to create a synthetic quiz dataset for using in web app.
+In this project, we will build a Jupyter notebook to create a synthetic quiz dataset for using in web application.
 
 Quiz data could be generated from various open sources. These sources provide quizzes gathered from user's posting.
 Considering this nature and be afraid of content right, I wanted to try other method of getting fake, or synthetic data.
 
 As I'm dedicated to using cloud solutions from [Google Cloud Platform (GCP)](https://cloud.google.com/),
-I use [Vertex AI](https://cloud.google.com/vertex-ai) to generate data for processing.
+I use [Vertex AI](https://cloud.google.com/vertex-ai) to generate text data mimics quiz which input by human in common format.
+
+From the mockup document, we will load, extract and process, re-engineer it into JSON format which is widely used for web application.
 
 ## Preparing
 
@@ -158,7 +161,7 @@ Call the generator and concatenate text from generator's responses together to m
 generate_text = ''.join(response for response in generator)
 ```
 
-## Export generated data to file, write to GCS
+## Export generated data to GCS
 
 Extract topic, difficulty and size from prompt text.
 Combine all into a new TXT file name.
@@ -365,3 +368,11 @@ json_string = df_clean.to_json()
 # Write JSON string to GCS object as a JSON file
 gcs_write(BUCKET, JSON_BLOB, json_string)
 ```
+
+## Conclusion
+
+From human-input form, the document is finally transformed into a parsable form, as a JSON file.
+Now it's ready to use in web application.
+
+There may be demand for other applications, such as analytics, interactive database, with more complex architects than general JSON format.
+In these cases, we can always take further steps with our original flow to work things out.
