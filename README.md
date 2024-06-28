@@ -332,12 +332,12 @@ Apply `split_choice` to dataset and store choices in new columns, named `incorre
 
 ```
 # Make a copy of `df1`
-df_2 = df1.copy()
+df2 = df1.copy()
 ```
 ```
 # Apply the function to full dataset
-df_2['incorrect'] = df_2['answer'].apply(split_choice).str['incorrect']
-df_2['correct'] = df_2['answer'].apply(split_choice).str['correct']
+df2['incorrect'] = df2['answer'].apply(split_choice).str['incorrect']
+df2['correct'] = df2['answer'].apply(split_choice).str['correct']
 ```
 
 ### 4. Compose clean dataframe
@@ -349,8 +349,8 @@ In this case, `question` and clean `incorrect`, `correct` are all that we will u
 # New order of columns
 new_order = ['question', 'incorrect', 'correct']
 
-# Make a copy of `df_a` with new order of columns
-df_clean = df_2[new_order].copy()
+# Make a copy of `df2` with new order of columns
+df_clean = df2[new_order].copy()
 ```
 
 ## Export clean data
