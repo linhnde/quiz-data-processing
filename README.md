@@ -25,8 +25,8 @@ In this project, we will build a Jupyter notebook to create a synthetic quiz dat
 Quiz data could be generated from various open sources. These sources provide quizzes gathered from user's posting.
 Considering this nature and be afraid of content right, I wanted to try other method of getting fake, or synthetic data.
 
-As I'm dedicated to using cloud solutions in [Google Cloud Platform (GCP)](https://cloud.google.com/),
-I get my solution from [Vertex AI](https://cloud.google.com/vertex-ai).
+As I'm dedicated to using cloud solutions from [Google Cloud Platform (GCP)](https://cloud.google.com/),
+I use [Vertex AI](https://cloud.google.com/vertex-ai) to generate data for processing practice.
 
 ## Preparing
 
