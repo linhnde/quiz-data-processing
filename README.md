@@ -2,6 +2,10 @@
 
 ### Jupyter Notebook file: [VIEW](quiz_data_processing.ipynb)
 
+## Diagram
+
+![Figure 1-1](quiz_data_processing.jpg?raw=true)
+
 ## Table of contents
 1. [Introduction](#introduction)
 2. [Preparing](#preparing)
