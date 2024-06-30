@@ -12,15 +12,17 @@
    1. [Import](#1-import)
    2. [Define functions interact with GCP](#2-define-functions-interact-with-gcp)
 3. [Generate Vertex AI content](#generate-vertex-ai-content)
-4. [Export generated data to GCS](#export-generated-data-to-gcs)
-5. [Load data from GCS](#load-data-from-gcs)
-6. [Process data](#process-data)
+   1. [Generate content from prompt](#1-generate-content-from-prompt)
+   2. [Export generated data to GCS ](#2-export-generated-data-to-gcs)
+4. [Load data from GCS](#load-data-from-gcs)
+5. [Process data](#process-data)
    1. [Split questions and answers from text](#1-split-questions-and-answers-from-text)
    2. [Tidy question text](#2-tidy-question-text)
    3. [Split answer text into multiple choices](#3-split-answer-text-into-multiple-choices)
-   4. [Compose clean dataframe](#4-compose-clean-dataframe)
-7. [Export clean data](#export-clean-data)
-8. [Conclusion](#conclusion)
+6. [Refactor data](#refactor-data)
+   1. [Refactor processed data](#1-refactor-processed-data)
+   2. [Export clean dataframe to GCS](#2-export-clean-dataframe-to-gcs)
+7. [Conclusion](#conclusion)
 
 
 ## Introduction
@@ -120,6 +122,8 @@ def generate(p_text, g_config, s_settings):
 
 ## Generate Vertex AI content
 
+### 1. Generate content from prompt
+
 Define variables with value we will use for Vertex AI input.
 
 ```
@@ -165,7 +169,7 @@ Call the generator and concatenate text from generator's responses together to m
 generate_text = ''.join(response for response in generator)
 ```
 
-## Export generated data to GCS
+### 2. Export generated data to GCS
 
 Extract topic, difficulty and size from prompt text.
 Combine all into a new TXT file name.
@@ -344,7 +348,9 @@ df2['incorrect'] = df2['answer'].apply(split_choice).str['incorrect']
 df2['correct'] = df2['answer'].apply(split_choice).str['correct']
 ```
 
-### 4. Compose clean dataframe
+## Refactor data
+
+### 1. Refactor processed data
 
 To save space and memory, we should include only columns that we need.
 In this case, `question` and clean `incorrect`, `correct` are all that we will use directly in our webb app.
@@ -357,7 +363,7 @@ new_order = ['question', 'incorrect', 'correct']
 df_clean = df2[new_order].copy()
 ```
 
-## Export clean data
+### 2. Export clean dataframe to GCS
 
 Now we can convert our data into JSON string and load it to GCS object as a JSON file for later application.
 
