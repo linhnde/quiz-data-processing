@@ -4,7 +4,7 @@
 
 ## Diagram
 
-![Figure 1-1](quiz_data_processing.jpg?raw=true)
+![](quiz_data_processing.jpg)
 
 ## Table of contents
 1. [Introduction](#introduction)
